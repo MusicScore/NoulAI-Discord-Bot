@@ -21,7 +21,7 @@ namespace NoulAIBotNetCore
         private NoulDiscordSettings Config = null;
         private static string ConfigFile = "config.yml";
 
-        private static List<NoulCommand> CommandList = new List<NoulCommand>();
+        private static Dictionary<string, NoulCommand> CommandList = new Dictionary<string, NoulCommand>();
 
         public static void Main(string[] args)
         {
@@ -89,12 +89,19 @@ namespace NoulAIBotNetCore
 
         private static void RegisterCommands()
         {
-            CommandList.Add(new HelpCommand());
+            CommandList.Add("help", new HelpCommand());
+            CommandList.Add("info", new InfoCommand());
         }
         
-        public static List<NoulCommand> GetNoulCommands()
+        public static Dictionary<string, NoulCommand> GetNoulCommands()
         {
             return CommandList;
+        }
+
+        private Task Log(LogMessage msg)
+        {
+            Console.WriteLine(msg.ToString());
+            return Task.CompletedTask;
         }
 
         private async Task HandleCommandAsync(SocketMessage socketMessage)
