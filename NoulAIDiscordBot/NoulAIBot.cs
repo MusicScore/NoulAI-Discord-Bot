@@ -19,7 +19,7 @@ namespace NoulAIBotNetCore
         public IServiceProvider Services;
 
         private NoulDiscordSettings Config = null;
-        private static string ConfigFile = "config.yml";
+        private const string ConfigFile = "config.yml";
 
         private static Dictionary<string, NoulCommand> CommandList = new Dictionary<string, NoulCommand>();
 
@@ -38,7 +38,7 @@ namespace NoulAIBotNetCore
                     Config = new YamlConfig(new UnderscoredNamingConvention()).Load<NoulDiscordSettings>(stream);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Console.WriteLine("Could not find the file [config.yml]. Try again!");
                 return;
