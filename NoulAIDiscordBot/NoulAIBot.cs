@@ -135,14 +135,14 @@ namespace NoulAIBotNetCore
                 }
 
                 ICommandContext context = new SocketCommandContext(Client, msg);
-                string cmdName = msg.HasMentionPrefix(Client.CurrentUser, ref argPos) ? msg.ToString().Split(' ')[1] : msg.ToString().Split(' ')[0].Substring(1);
-                string cmdText = StringUtilities.After(msg.ToString(), cmdName, true);
-
-                await LogInfo("User (" + msg.Author.Username + ")<" + msg.Author.Id + "> has run command \"$" +
-                    cmdName + (cmdText != "" ? " " + cmdText : "") + "\".");
+                string cmdName = (msg.HasMentionPrefix(Client.CurrentUser, ref argPos) ? msg.ToString().Split(' ')[1] : msg.ToString().Split(' ')[0].Substring(1)).ToLower();
+                string cmdText = StringUtilities.After(msg.ToString(), cmdName, true).ToLower();
 
                 if (Commands.Search(cmdName).IsSuccess)
                 {
+                    await LogInfo("User (" + msg.Author.Username + ")<" + msg.Author.Id + "> has run command \"$" +
+                        cmdName + (cmdText != "" ? " " + cmdText : "") + "\".");
+
                     if (!CommandList.ContainsKey(cmdName))
                     {
                         await context.Channel.SendMessageAsync("Hey! The command **" + msg.ToString().Split(' ')[0] + "** looks like something I could run, "

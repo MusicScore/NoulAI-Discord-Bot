@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Text;
 
 namespace NoulAIBotNetCore.Utilities
 {
@@ -90,6 +90,38 @@ namespace NoulAIBotNetCore.Utilities
         public static string After(string source, string after)
         {
             return After(source, after, false);
+        }
+
+        public static bool ContainsText(string source, string find)
+        {
+            return FindIndexOfString(source, find) != -1;
+        }
+    }
+
+    public class StringArgumentUtilities
+    {
+        public static bool ContainsArg(string commandText, string argument, bool caseSensitive)
+        {
+            if (!caseSensitive)
+            {
+                commandText.ToLower();
+                argument = argument.ToLower();
+            }
+            string[] data = commandText.Split(' ');
+            
+            foreach (string argComponent in data)
+            {
+                if (argComponent == argument)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool ContainsArg(string commandText, string argument)
+        {
+            return ContainsArg(commandText, argument, true);
         }
     }
 }
