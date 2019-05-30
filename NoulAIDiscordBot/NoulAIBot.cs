@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Text;
 
 namespace NoulAIBotNetCore
 {
@@ -18,6 +19,8 @@ namespace NoulAIBotNetCore
         public CommandService Commands;
         public IServiceProvider Services;
 
+        public static NoulAIDiscordBot instance;
+
         private NoulDiscordSettings Config = null;
         private const string ConfigFile = "config.yml";
 
@@ -25,8 +28,10 @@ namespace NoulAIBotNetCore
 
         public static void Main(string[] args)
         {
+            instance = new NoulAIDiscordBot();
+
             RegisterCommands();
-            new NoulAIDiscordBot().StartAsync().GetAwaiter().GetResult();
+            instance.StartAsync().GetAwaiter().GetResult();
         }
 
         public async Task StartAsync()
@@ -106,14 +111,29 @@ namespace NoulAIBotNetCore
 
         private async Task HandleCommandAsync(SocketMessage socketMessage)
         {
-            if (socketMessage is SocketUserMessage msg && !msg.Author.IsBot) {
+            if (socketMessage is SocketUserMessage msg && !msg.Author.IsBot)
+            {
                 int argPos = 0;
+
                 if (!msg.HasStringPrefix("$", ref argPos) && !msg.HasMentionPrefix(Client.CurrentUser, ref argPos))
                 {
                     return;
                 }
 
                 ICommandContext context = new SocketCommandContext(Client, msg);
+
+                string cmdName = msg.HasMentionPrefix(Client.CurrentUser, ref argPos) ? msg.ToString().Split(' ')[1] : msg.ToString().Split(' ')[0].Substring(1);
+
+                if (Commands.Search(cmdName).IsSuccess)
+                {
+                    if (!CommandList.ContainsKey(cmdName))
+                    {
+                        await context.Channel.SendMessageAsync("Hey! The command **" + msg.ToString().Split(' ')[0] + "** looks like something I could run, "
+                            + "but I can't. Is there another bot that handles that command? I don't know if there are. I'm just a terminal bot, I can't see!");
+                        return;
+                    }
+                }
+
                 IResult result = await Commands.ExecuteAsync(context, argPos, Services);
 
                 if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
