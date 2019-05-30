@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NoulAIBotNetCore.Configuration;
 using NoulAIBotNetCore.Command;
+using NoulAIBotNetCore.Utilities;
 using YamlDotNet.Serialization.NamingConventions;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,7 @@ namespace NoulAIBotNetCore
         public static NoulAIDiscordBot instance;
 
         private NoulDiscordSettings Config = null;
+        private const string BotLogPrefix = "NoulAIDiscordBot";
         private const string ConfigFile = "config.yml";
 
         private static Dictionary<string, NoulCommand> CommandList = new Dictionary<string, NoulCommand>();
@@ -105,7 +107,19 @@ namespace NoulAIBotNetCore
 
         private Task Log(LogMessage msg)
         {
-            Console.WriteLine(msg.ToString());
+            Console.WriteLine("[" + StringUtilities.Before(msg.ToString(), ' ') + "][" + msg.Source + "/" + msg.Severity + "] :: " + msg.Message );
+            return Task.CompletedTask;
+        }
+
+        private Task LogInfo(string message)
+        {
+            Log(new LogMessage(LogSeverity.Info, BotLogPrefix, message, null));
+            return Task.CompletedTask;
+        }
+
+        private Task LogInfo(string source, string message)
+        {
+            Log(new LogMessage(LogSeverity.Info, source, message, null));
             return Task.CompletedTask;
         }
 
@@ -121,8 +135,11 @@ namespace NoulAIBotNetCore
                 }
 
                 ICommandContext context = new SocketCommandContext(Client, msg);
-
                 string cmdName = msg.HasMentionPrefix(Client.CurrentUser, ref argPos) ? msg.ToString().Split(' ')[1] : msg.ToString().Split(' ')[0].Substring(1);
+                string cmdText = StringUtilities.After(msg.ToString(), cmdName, true);
+
+                await LogInfo("User (" + msg.Author.Username + ")<" + msg.Author.Id + "> has run command \"$" +
+                    cmdName + (cmdText != "" ? " " + cmdText : "") + "\".");
 
                 if (Commands.Search(cmdName).IsSuccess)
                 {
@@ -130,6 +147,7 @@ namespace NoulAIBotNetCore
                     {
                         await context.Channel.SendMessageAsync("Hey! The command **" + msg.ToString().Split(' ')[0] + "** looks like something I could run, "
                             + "but I can't. Is there another bot that handles that command? I don't know if there are. I'm just a terminal bot, I can't see!");
+                        await LogInfo("> > Command failed! Command exists, but is not registered!");
                         return;
                     }
                 }
@@ -139,6 +157,7 @@ namespace NoulAIBotNetCore
                 if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
                 {
                     await context.Channel.SendMessageAsync(result.ErrorReason);
+                    await LogInfo("> > Command failed! Reason: " + result.ErrorReason);
                 }
             }
         }
